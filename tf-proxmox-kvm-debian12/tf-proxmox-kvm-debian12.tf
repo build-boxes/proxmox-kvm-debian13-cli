@@ -77,7 +77,7 @@ variable "prefix" {
   # This is used to rename the host to this name.description
   # also used as a prefix for text and log files names.
   type    = string
-  default = "falcon01"
+  default = "Hawk01"
 }
 
 variable "pub_key_file" {
@@ -108,7 +108,7 @@ variable "superuser_password" {
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vms
 data "proxmox_virtual_environment_vms" "debian12_templates" {
-  tags = ["debian", "debian12", "desktop", "docker", "gnome", "template"]
+  tags = ["debian", "debian12", "cli", "docker", "template"]
 }
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vm
@@ -177,7 +177,7 @@ resource "proxmox_virtual_environment_file" "example_ci_user_data" {
 resource "proxmox_virtual_environment_vm" "example" {
   name      = var.prefix
   node_name = var.proxmox_node_name
-  tags      = sort(["debian12", "example", "terraform"])
+  tags      = sort(["debian12", "cli", "example", "terraform"])
   clone {
     vm_id = data.proxmox_virtual_environment_vm.debian12_template.vm_id
     full  = true
@@ -229,7 +229,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     # # Use following if need fixed IP Address, otherwise comment out
     ip_config {
       ipv4 {
-        address = "192.168.4.80/24"
+        address = "192.168.4.85/24"
         gateway = "192.168.4.1"
       }
     }
@@ -271,25 +271,6 @@ resource "null_resource" "ssh_into_vm" {
         grep -q "/usr/sbin" "$BASHRC" || echo 'export PATH="/usr/sbin:$PATH"' >> "$BASHRC"
         echo "Added /usr/sbin to user PATH variable"
       fi;
-      gnome-extensions enable dash-to-dock@micxgx.gmail.com
-      echo "Enabled dash-to-dock extension for user."
-      # Set dock position to LEFT
-      gsettings set org.gnome.shell.extensions.dash-to-dock dock-position 'LEFT'
-      # Make the dock extend to full height (panel-like)
-      gsettings set org.gnome.shell.extensions.dash-to-dock extend-height true
-      # Disable autohide if you want it always visible
-      gsettings set org.gnome.shell.extensions.dash-to-dock autohide false
-      # Enable Intellihide
-      gsettings set org.gnome.shell.extensions.dash-to-dock intellihide true
-      # Optional: Set fixed icon size
-      gsettings set org.gnome.shell.extensions.dash-to-dock dash-max-icon-size 32
-      # Optional: Make background fully opaque
-      gsettings set org.gnome.shell.extensions.dash-to-dock transparency-mode 'FIXED'
-      gsettings set org.gnome.shell.extensions.dash-to-dock background-opacity 0.4
-      echo "Dash to Dock configured as a left-side panel."
-      # Set Windows Buttons
-      gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
-      echo "Window buttons updated: minimize and maximize enabled."
       # Fix Flathub inclusion in gnome-software app for user
       #gnome-software --quit
       flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo

@@ -1,7 +1,7 @@
 proxmox_host      = "10.0.0.10:8006"
 proxmox_node      = "shackvm01"
 vm_name           = "template-debian-12-docker"
-vmid              = "9000"
+vmid              = "9100"
 cpu_type          = "host"
 cores             = "2"
 memory            = "2048"

@@ -10,7 +10,7 @@ source "proxmox-iso" "debian-12" {
 
   vm_name                 = var.vm_name
   template_description    = "Debian 12 Bookworm Packer Template, with Docker installed  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
-  tags                    = "template;debian;debian12;bookworm;desktop;gnome;docker"
+  tags                    = "template;debian;debian12;bookworm;cli;docker"
   vm_id                   = var.vmid
   os                      = "l26"
   cpu_type                = var.cpu_type

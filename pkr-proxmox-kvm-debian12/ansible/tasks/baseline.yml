@@ -26,7 +26,6 @@
     - tmux
     - unattended-upgrades
     - wget
-    - unattended-upgrades
 
 - name: Set APT periodic update settings
   copy:

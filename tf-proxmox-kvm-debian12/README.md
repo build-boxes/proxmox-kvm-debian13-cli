@@ -8,11 +8,6 @@ Proxmox VE can store Qemu KVM VM (Virtual Machine) images and LXC Container Imag
 - Cores - Minimum 2 cores - 1 GHz or faster.
 
 
-## Debian12 - Gnome Desktop Customization
-```
-sudo apt install -y -no-install-recommends chrome-gnome-shell gnome-shell-extension-dashtodock gnome-shell-extension-manager gnome-shell-extensions gnome-shell-extensions-extra gnome-tweaks lua5.4 jq imagemagick
-```
-
 ## Using Terraform to Clone Qemu VM template on Proxmox
 ```
 terraform init
