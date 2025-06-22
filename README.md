@@ -52,7 +52,6 @@ There are two parts to it.
             ```
             sudo passwd terraform
             ```
-    1. Now you can use RDP client to start a Desktop session with your instance.
     1. To Destroy the Instance use the following command, in the ./tf-proxmox-kvm-debian12 folder:
         ```
         terraform destroy -auto-approve
