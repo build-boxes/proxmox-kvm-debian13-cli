@@ -36,3 +36,27 @@
     owner: root
     group: root
     mode: '0644'
+
+- name: Update Debian Repos as per Debian12 Errata (https://www.debian.org/releases/stable/errata)
+  become: true
+  become_method: sudo
+  become_flags: "su -c"
+  ansible.builtin.shell:
+    cmd: |
+      sudo sh -c 'echo "deb http://security.debian.org/ bookworm-security main contrib non-free non-free-firmware" >> /etc/apt/sources.list'
+      sudo sh -c 'echo "deb https://deb.debian.org/debian bookworm-proposed-updates main contrib non-free-firmware non-free" >> /etc/apt/sources.list'
+
+
+- name: Upgrade All Packages To The Latest Version, after Debian12 Errata repos are added.
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: true
+
+
+- name: Wait until no process is locking dpkg, and all updates are complete.
+  ansible.builtin.shell: |
+    ! sudo fuser /var/lib/dpkg/lock > /dev/null 2>&1
+  register: lock_check
+  retries: 60
+  delay: 2
+  until: lock_check.rc == 0

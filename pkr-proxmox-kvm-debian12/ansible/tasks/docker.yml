@@ -1,14 +1,43 @@
 ---
-- name: Add GPG key for Docker Repository
-  ansible.builtin.apt_key:
+- name: Ensure /etc/apt/keyrings directory exists with correct permissions
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Download Docker GPG key
+  ansible.builtin.get_url:
     url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+
+- name: Ensure /etc/apt/keyrings/docker.asc is world-readable
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/docker.asc
+    mode: '0644'
+    owner: root
+    group: root
+  become: true
+
+- name: Add Docker repository using deb822_repository
+  ansible.builtin.deb822_repository:
+    name: docker
+    types: [deb]
+    uris: https://download.docker.com/linux/debian
+    suites: [bookworm]
+    components: [stable]
+    architectures: [amd64]
+    signed_by: /etc/apt/keyrings/docker.asc
+    enabled: true
     state: present
 
-- name: Add Docker Repository
-  ansible.builtin.apt_repository:
-    repo: deb https://download.docker.com/linux/debian bookworm stable
-    state: present
-    filename: docker
+- name: Update apt package cache - before getting docker packages
+  ansible.builtin.apt:
+    update_cache: yes
+  become: true
 
 - name: Install Docker Engine, Docker CLI, Containerd, & Docker Compose
   ansible.builtin.apt:

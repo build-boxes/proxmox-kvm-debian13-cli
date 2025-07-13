@@ -28,7 +28,7 @@ There are two parts to it.
         ```
         packer build -var-file vars/debian12-hammad.pkrvars.hcl -var "proxmox_api_password=Password#01" .
         --- OR ---
-        packer build -var-file vars/debian12.pkrvars.hcl -var "proxmox_api_password=Stupido@2017" .
+        packer build -var-file vars/debian12.pkrvars.hcl -var "proxmox_api_password=Password#01" .
         ```
     1. The Image (KVM Template) should now be ready on the Proxmox server.
 1. VM Instance Creation

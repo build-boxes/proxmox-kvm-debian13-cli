@@ -8,7 +8,6 @@
       /usr/bin/flatpak remote-add --if-not-exists
       flathub https://dl.flathub.org/repo/flathub.flatpakrepo;
 
-
 - name: Update user's .bashrc with /usr/sbin in PATH
   become: true
   become_method: sudo
@@ -21,3 +20,11 @@
         grep -q "/usr/sbin" "$BASHRC" || echo 'export PATH="/usr/sbin:$PATH"' >> "$BASHRC"
       fi
 
+# Following should always be the last statement in last Ansible task, Make sure dpkg locks are not ongoing.
+- name: Wait until no process is locking dpkg, and all updates are complete, before terminating this build....
+  ansible.builtin.shell: |
+    ! sudo fuser /var/lib/dpkg/lock > /dev/null 2>&1
+  register: lock_check
+  retries: 90
+  delay: 2
+  until: lock_check.rc == 0
