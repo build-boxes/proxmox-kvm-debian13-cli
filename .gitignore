@@ -29,6 +29,8 @@
 */*.tfvars
 */*.tfvars.json
 
+
+
 # Ignore override files as they are usually used to override resources locally and so
 # are not checked in
 */override.tf
@@ -56,5 +58,4 @@
 **/*.box
 
 # Hammad custom
-**/debian12-hammad.pkrvars.*
-**/debian13-hammad.pkrvars.*
+**/debian*-hammad.pkrvars.*
