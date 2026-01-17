@@ -184,8 +184,8 @@ variable "disk_size_gb_boot" {
   description = "Boot disk size in GB for the created VM. Default is '16G'."
   default     = "16G"
   validation {
-    condition     = tonumber(regexreplace(var.disk_size_gb_boot, "[^0-9]", "")) >= 16 && tonumber(regexreplace(var.disk_size_gb_boot, "[^0-9]", "")) <= 200
-    error_message = "Boot disk size must be at least '16GB', and at most '200GB'. Also note that is a String value inside Double-Quotes with 'G' at its end."
+    condition     = tonumber(replace(var.disk_size_gb_boot, "G", "")) >= 16 && tonumber(replace(var.disk_size_gb_boot, "G", "")) <= 200
+    error_message = "Boot disk size must be at least '16G', and at most '200G'. Also note that is a String value inside Double-Quotes with 'G' at its end."
   }
 }
 
@@ -295,7 +295,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     iothread    = true
     ssd         = true
     discard     = "on"
-    size        = var.disk_size_gb_boot
+    size        = tonumber(replace(var.disk_size_gb_boot, "G", ""))
   }
   ## Add additional Disks here, if required.
   ##
