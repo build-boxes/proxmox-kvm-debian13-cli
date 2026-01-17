@@ -36,25 +36,27 @@
     group: root
     mode: '0644'
 
-- name: Update Debian Repos as per Debian13 Errata (https://www.debian.org/releases/stable/errata)
-  become: true
-  become_method: sudo
-  become_flags: "su -c"
-  ansible.builtin.shell:
-    cmd: |
-      sudo sh -c 'echo "deb https://deb.debian.org/debian trixie-proposed-updates main contrib non-free" >> /etc/apt/sources.list'
+- name: Set root password to never expire
+  user:
+    name: root
+    expires: -1
 
+- name: Set SuperUser password to never expire
+  user:
+    name: "{{ superuser_name }}"
+    expires: -1
 
-- name: Upgrade All Packages To The Latest Version, after Debian13 Errata repos are added.
-  ansible.builtin.apt:
-    update_cache: true
-    upgrade: true
+- name: Set /bin/bash as default shell for new users
+  lineinfile:
+    path: /etc/default/useradd
+    regexp: '^SHELL='
+    line: 'SHELL=/bin/bash'
+    create: true
 
-
-- name: Wait until no process is locking dpkg, and all updates are complete.
-  ansible.builtin.shell: |
-    ! sudo fuser /var/lib/dpkg/lock > /dev/null 2>&1
-  register: lock_check
-  retries: 60
-  delay: 2
-  until: lock_check.rc == 0
+- name: Set /bin/bash for existing users
+  user:
+    name: "{{ item }}"
+    shell: /bin/bash
+  loop:
+    - "{{ superuser_name }}"
+    - root    

@@ -10,7 +10,7 @@ source "proxmox-iso" "debian-13" {
 
   vm_name                 = var.vm_name
   template_description    = "Debian 13 Trixie Packer Template, with Docker installed  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
-  tags                    = "template;debian;debian13;trixie;cli;docker"
+  tags                    = join(";", var.vm_image_tags)
   vm_id                   = var.vmid
   os                      = "l26"
   cpu_type                = var.cpu_type
@@ -20,7 +20,7 @@ source "proxmox-iso" "debian-13" {
   machine                 = "q35"
   bios                    = "ovmf"
   efi_config {
-      efi_storage_pool  = "local-lvm"
+      efi_storage_pool  = var.storage_pool
       pre_enrolled_keys = false
       efi_format        = "raw"
       efi_type          = "4m"

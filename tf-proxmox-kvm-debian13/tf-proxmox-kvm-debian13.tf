@@ -82,12 +82,12 @@ variable "prefix" {
 
 variable "pub_key_file" {
   type = string
-  default = "~/.ssh/id_rsa.pub"
+  #default = "~/.ssh/id_rsa.pub"
 }
 
 variable "pvt_key_file" {
   type = string
-  default = "~/.ssh/id_rsa"
+  #default = "~/.ssh/id_rsa"
   sensitive = true
 }
 
@@ -96,7 +96,7 @@ variable "superuser_username" {
   default = "terraform"
 }
 
-variable "superuser_password" {
+variable "superuser_old_password" {
   type      = string
   sensitive = true
   # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
@@ -106,9 +106,99 @@ variable "superuser_password" {
   default = "HeyH0Password"
 }
 
+
+variable "superuser_new_password" {
+  type      = string
+  sensitive = true
+  # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
+  # NB this value must meet the Windows password policy requirements.
+  #    see https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
+  # Password with @ symbol has issues in cloudbase-init scripts escape-sequencing in terraform ".tf" files
+  default = "HeyH0Password"
+}
+
+variable "root_new_password" {
+  type      = string
+  sensitive = true
+  default = "HeyH0Password"
+}
+
+variable "proxmox_vm_template_tags" {
+  type        = list(string)
+  description = "Tags to filter Proxmox VM templates"
+  default     = ["debian", "debian13", "desktop", "docker", "gnome", "template", "trixie"]
+}
+
+variable "proxmox_vm_tags" {
+  type        = list(string)
+  description = "Tags to assign to created Proxmox VMs"
+  default     = ["debian13", "desktop", "example", "terraform"]
+}
+
+variable "proxmox_datastore_id" {
+  type        = string
+  description = "Proxmox Datastore ID where VM disks are stored"
+  default     = "local-lvm"
+}
+
+variable "vm_fixed_ip" {
+  type        = string
+  description = "Fixed IP address with CIDR notation for the created VM"
+  default     = "192.168.0.3/24"
+}
+
+variable "vm_fixed_gateway" {
+  type        = string
+  description = "Fixed Gateway IP address for the created VM"
+  default     = "192.168.0.1"
+}
+
+variable "vm_fixed_dns" {
+  type        = list(string)
+  description = "Fixed DNS server IP addresses for the created VM"
+  default     = ["192.168.0.1"]
+}
+
+variable "cpu_core_count" {
+  type        = number
+  description = "Number of CPU cores for the created VM"
+  default     = 1
+  validation {
+    condition     = var.cpu_core_count >= 1 && var.cpu_core_count <= 8
+    error_message = "CPU core count must be at least 1, and at most 8."
+  }
+}
+
+variable "memory_size_gb" {
+  type        = number
+  description = "Memory size in GB for the created VM"
+  default     = 1
+  validation {
+    condition     = var.memory_size_gb >= 1 && var.memory_size_gb <= 15
+    error_message = "Memory size must be at least 1 GB, and at most 15 GB."
+  }
+}
+
+variable "disk_size_gb_boot" {
+  type        = string
+  description = "Boot disk size in GB for the created VM. Default is '16G'."
+  default     = "16G"
+  validation {
+    condition     = tonumber(regexreplace(var.disk_size_gb_boot, "[^0-9]", "")) >= 16 && tonumber(regexreplace(var.disk_size_gb_boot, "[^0-9]", "")) <= 200
+    error_message = "Boot disk size must be at least '16GB', and at most '200GB'. Also note that is a String value inside Double-Quotes with 'G' at its end."
+  }
+}
+
+locals {
+  # Store the computed host IP address for reuse throughout the configuration
+  host_ip = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
+}
+
+
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vms
 data "proxmox_virtual_environment_vms" "debian13_templates" {
-  tags = ["debian", "debian13", "cli", "docker", "template"]
+  tags = var.proxmox_vm_template_tags
+  node_name="jupyter"
 }
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vm
@@ -133,7 +223,11 @@ data "cloudinit_config" "example" {
     content      = <<-EOF
       #!/bin/bash
       
+      echo "${var.superuser_username} ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${var.superuser_username}
+      sudo chmod 0440 /etc/sudoers.d/${var.superuser_username}
+
       # Identify all disks without partitions and initialize them for LVM
+      echo "Starting non-boot disk initialization for LVM..."      
       n=2
       for disk in $(lsblk -dn -o NAME,TYPE | awk '$2=="disk"{print $1}'); do
         if ! lsblk /dev/$disk | grep -q part; then
@@ -149,15 +243,16 @@ data "cloudinit_config" "example" {
           partprobe /dev/$disk
       
           # Prepare the partition for LVM (create PV)
-          pvcreate /dev/$disk1
+          pvcreate /dev/$${disk}1
       
           # Optional: add to VG (example: vgname)
-          vgcreate my_vg_edisk$n /dev/$disk1
+          vgcreate my_vg_edisk$n /dev/$${disk}1
           ((n++))
       
-          echo "Initialized /dev/$disk1 for LVM"
+          echo "Initialized /dev/$${disk}1 for LVM"
         fi
       done
+      echo "... Non-boot disk initialization for LVM completed."
       EOF
   }
 }
@@ -165,7 +260,7 @@ data "cloudinit_config" "example" {
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/resources/virtual_environment_file
 resource "proxmox_virtual_environment_file" "example_ci_user_data" {
   content_type = "snippets"
-  datastore_id = "local"
+  datastore_id = var.proxmox_datastore_id
   node_name    = var.proxmox_node_name
   source_raw {
     file_name = "${var.prefix}-ci-user-data.txt"
@@ -177,7 +272,7 @@ resource "proxmox_virtual_environment_file" "example_ci_user_data" {
 resource "proxmox_virtual_environment_vm" "example" {
   name      = var.prefix
   node_name = var.proxmox_node_name
-  tags      = sort(["debian13", "cli", "example", "terraform"])
+  tags      = var.proxmox_vm_tags
   clone {
     vm_id = data.proxmox_virtual_environment_vm.debian13_template.vm_id
     full  = true
@@ -185,33 +280,35 @@ resource "proxmox_virtual_environment_vm" "example" {
   cpu {
     type  = "host"
     #type  = "x86-64-v2-AES"
-    cores = 2
+    cores = var.cpu_core_count
   }
   memory {
-    dedicated = 3 * 1024
+    dedicated = 1024 * var.memory_size_gb
   }
   network_device {
     bridge = "vmbr0"
   }
   disk {      # Boot Disk, Size can be increased here. Then manually Increase Volume size inside Windows-2025.
+    datastore_id = var.proxmox_datastore_id
     interface   = "scsi0"
     file_format = "raw"
     iothread    = true
     ssd         = true
     discard     = "on"
-    size        = 20     # minimum size of the Template image disk.
+    size        = var.disk_size_gb_boot
   }
   ## Add additional Disks here, if required.
   ##
   ##
-  disk {      # Boot Disk, Size can be increased here. Then manually Increase Volume size inside Windows-2025.
-    interface   = "scsi1"
-    file_format = "raw"
-    iothread    = true
-    ssd         = true
-    discard     = "on"
-    size        = 16     # minimum size of the Template image disk.
-  }
+  # disk {      # Boot Disk, Size can be increased here. Then manually Increase Volume size inside Windows-2025.
+  #   datastore_id = var.proxmox_datastore_id
+  #   interface   = "scsi1"
+  #   file_format = "raw"
+  #   iothread    = true
+  #   ssd         = true
+  #   discard     = "on"
+  #   size        = 16     # minimum size of the Template image disk.
+  # }
 
   agent {
     enabled = true
@@ -225,16 +322,17 @@ resource "proxmox_virtual_environment_vm" "example" {
   # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/resources/virtual_environment_vm#initialization
   initialization {
     user_data_file_id = proxmox_virtual_environment_file.example_ci_user_data.id
+    datastore_id = var.proxmox_datastore_id    
     # # >>> Fixed IP -- Start
     # # Use following if need fixed IP Address, otherwise comment out
     ip_config {
       ipv4 {
-        address = "192.168.4.86/24"
-        gateway = "192.168.4.1"
+        address = var.vm_fixed_ip
+        gateway = var.vm_fixed_gateway
       }
     }
     dns {
-      servers = ["192.168.4.1"]
+      servers = var.vm_fixed_dns
     }
     # # >>> Fixed IP -- End
   }
@@ -254,9 +352,9 @@ resource "null_resource" "ssh_into_vm" {
     connection {
       target_platform = "unix"
       type            = "ssh"
-      host            = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
+      host            = local.host_ip
       user            = var.superuser_username
-      password        = var.superuser_password
+      password        = var.superuser_old_password
       private_key = file("${var.pvt_key_file}")
       agent = false
       timeout = "2m"
@@ -265,6 +363,16 @@ resource "null_resource" "ssh_into_vm" {
     inline = [
       <<-EOF
       echo "Sucessfully logged in as user: '$(whoami)'";
+      echo "Resetting password expiration...";
+      echo "${var.superuser_username}:${var.superuser_new_password}" | sudo chpasswd;
+      sudo chage -I -1 -m 0 -M -1 -E -1 ${var.superuser_username};
+      echo "Resetting 'root' password expiration...";
+      echo "root:${var.root_new_password}" | sudo chpasswd;
+      sudo chage -I -1 -m 0 -M -1 -E -1 root;
+      echo "Configuring passwordless sudo for ${var.superuser_username}...";
+      echo "${var.superuser_username} ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/${var.superuser_username};
+      sudo chmod 0440 /etc/sudoers.d/${var.superuser_username};
+      echo "Password reset and sudo configuration completed";      
       USERID="${var.superuser_username}";
       BASHRC="/home/${var.superuser_username}/.bashrc";
       if [ -d "/home/${var.superuser_username}" ] && [ -f "$BASHRC" ]; then
@@ -276,21 +384,51 @@ resource "null_resource" "ssh_into_vm" {
       flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
       flatpak --user remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
       echo "Fixed Flathub inclusion in gnome-software App store for User"
+      # Set Hostname to prefix
+      echo "Setting hostname to ${var.prefix}"
+      sudo hostnamectl set-hostname ${var.prefix}      
       EOF
     ]
   }
 }
 
-
-resource "null_resource" "restart_vm" {
+resource "time_sleep" "wait_3_minutes" {
   depends_on = [null_resource.ssh_into_vm]
+  # 12 minutes sleep. I have a slow Proxmox Host :(
+  create_duration = "3m"
+}
+
+resource "null_resource" "wait_4_apt" {
+  depends_on = [time_sleep.wait_3_minutes]
   provisioner "remote-exec" {
     connection {
       target_platform = "unix"
       type            = "ssh"
-      host            = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
+      host            = local.host_ip
       user            = var.superuser_username
-      password        = var.superuser_password
+      password        = var.superuser_new_password
+      private_key     = file("${var.pvt_key_file}")
+      agent           = false
+      timeout         = "5m"
+    }
+    inline = [
+      # Wait until no apt/dpkg lock is present
+      "for i in {1..300}; do sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 || break; sleep 2; done",
+      "for i in {1..300}; do sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || break; sleep 2; done",
+      "for i in {1..300}; do sudo fuser /var/cache/apt/archives/lock >/dev/null 2>&1 || break; sleep 2; done"
+    ]
+  }
+}
+
+resource "null_resource" "restart_vm" {
+  depends_on = [null_resource.wait_4_apt]
+  provisioner "remote-exec" {
+    connection {
+      target_platform = "unix"
+      type            = "ssh"
+      host            = local.host_ip
+      user            = var.superuser_username
+      password        = var.superuser_new_password
       private_key = file("${var.pvt_key_file}")
       agent = false
       timeout = "2m"
@@ -304,7 +442,38 @@ resource "null_resource" "restart_vm" {
   }
 }
 
+resource "time_sleep" "wait_3_minutes_2" {
+  depends_on = [null_resource.restart_vm]
+  create_duration = "3m"
+}
+
+resource "null_resource" "copy_compose_file" {
+  depends_on = [time_sleep.wait_3_minutes_2]
+  provisioner "local-exec" {
+    command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/docker-compose.yml ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/"
+  }
+}
+
+resource "null_resource" "run_docker_compose" {
+  depends_on = [null_resource.copy_compose_file]
+  provisioner "local-exec" {
+    command = <<EOT
+      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d"
+    EOT
+  }
+}
+
+# resource "null_resource" "call_custom_script" {
+#   depends_on = [null_resource.restart_vm]
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/install_ahc.sh ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/install_ahc.sh
+#       ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "chmod +x /home/${var.superuser_username}/install_ahc.sh && /home/${var.superuser_username}/install_ahc.sh"
+#     EOT
+#   }
+# }
+
 output "ip" {
-  value = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
+  value = local.host_ip
   #proxmox_virtual_environment_vm.example.ipv4_addresses[index(proxmox_virtual_environment_vm.example.network_interface_names, "Ethernet")][0]
 }

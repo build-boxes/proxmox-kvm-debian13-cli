@@ -14,7 +14,7 @@
   become_flags: "su -c"
   ansible.builtin.shell:
     cmd: |
-      USERID="terraform"
+      USERID="{{ superuser_name }}"
       BASHRC="/home/$USERID/.bashrc"
       if [ -d "/home/$USERID" ] && [ -f "$BASHRC" ]; then
         grep -q "/usr/sbin" "$BASHRC" || echo 'export PATH="/usr/sbin:$PATH"' >> "$BASHRC"
