@@ -2,7 +2,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    name: postgres
+    container_name: postgres_01
     restart: always
     ports:
       - 5432:5432
@@ -15,7 +15,7 @@ services:
 
   dockhand:
     image: fnsys/dockhand:latest
-    name: dockhand
+    container_name: dockhand_01
     restart: always
     ports:
       - 3000:3000
