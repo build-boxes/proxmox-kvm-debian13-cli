@@ -18,7 +18,7 @@ terraform {
     # see https://github.com/bpg/terraform-provider-proxmox
     proxmox = {
       source  = "bpg/proxmox"
-      version = "0.75.0"
+      version = "0.93.0"
     }
     time = {
           source = "hashicorp/time"
@@ -189,6 +189,16 @@ variable "disk_size_gb_boot" {
   }
 }
 
+variable "disk_boot_ssd_enabled" {
+  type        = bool
+  description = "Enable SSD flag for the boot disk of the created VM"
+  default     = true
+  validation {
+    condition     = var.disk_boot_ssd_enabled == true || var.disk_boot_ssd_enabled == false
+    error_message = "Disk_boot_ssd_enabled must be a boolean value (true or false)."
+  }
+}
+
 locals {
   # Store the computed host IP address for reuse throughout the configuration
   host_ip = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
@@ -293,7 +303,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     interface   = "scsi0"
     file_format = "raw"
     iothread    = true
-    ssd         = true
+    ssd         = var.disk_boot_ssd_enabled
     discard     = "on"
     size        = tonumber(replace(var.disk_size_gb_boot, "G", ""))
   }
@@ -386,7 +396,39 @@ resource "null_resource" "ssh_into_vm" {
       echo "Fixed Flathub inclusion in gnome-software App store for User"
       # Set Hostname to prefix
       echo "Setting hostname to ${var.prefix}"
-      sudo hostnamectl set-hostname ${var.prefix}      
+      sudo hostnamectl set-hostname ${var.prefix}
+      sudo sed -i 's/127.0.1.1\s\+debian/127.0.1.1\t${var.prefix}/' /etc/hosts
+      ## For debian13-cli - Fix dns, Disable ipv6
+      ##
+      echo "Setting DNS servers to ${join(" ", var.vm_fixed_dns)}"
+      sudo bash -c 'cat > /etc/resolv.conf << EOL
+      nameserver ${join("\nnameserver ", var.vm_fixed_dns)}
+      EOL'
+      echo "Disabling IPv6..."
+      sudo bash -c 'cat >> /etc/sysctl.d/99-disable-ipv6.conf << EOL
+      net.ipv6.conf.all.disable_ipv6 = 1
+      net.ipv6.conf.default.disable_ipv6 = 1
+      net.ipv6.conf.lo.disable_ipv6 = 1
+      EOL'
+      sudo sysctl -p /etc/sysctl.d/99-disable-ipv6.conf
+      ##
+      ## End dns and ipv6 fix
+      ##
+      ## Extend Root filesystem to fill boot disk
+      ##
+      echo "Extending root filesystem to fill boot disk..."
+      sudo growpart /dev/sda 3
+      sudo pvresize /dev/sda3
+      sudo lvextend -l +100%FREE /dev/debian-vg/root
+      sudo resize2fs /dev/debian-vg/root
+      echo "Extended root filesystem to fill boot disk."
+      ## End Extend Root filesystem to fill boot disk
+      ## Enable Docker Service to start at boot
+      ##
+      echo "Enabling Docker service to start at boot..."
+      sudo systemctl enable docker
+      echo "Enabled Docker service to start at boot."
+      ## End Enable Docker Service to start at boot 
       EOF
     ]
   }
@@ -458,20 +500,42 @@ resource "null_resource" "run_docker_compose" {
   depends_on = [null_resource.copy_compose_file]
   provisioner "local-exec" {
     command = <<EOT
-      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d"
+      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
     EOT
   }
 }
 
-# resource "null_resource" "call_custom_script" {
-#   depends_on = [null_resource.restart_vm]
-#   provisioner "local-exec" {
-#     command = <<EOT
-#       scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/install_ahc.sh ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/install_ahc.sh
-#       ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "chmod +x /home/${var.superuser_username}/install_ahc.sh && /home/${var.superuser_username}/install_ahc.sh"
-#     EOT
-#   }
-# }
+
+/*
+## Example of copying and running a custom script on the created VM.
+## Assumes the custom script is located in ../scripts/install_ahc.sh
+##
+resource "null_resource" "call_custom_script" {
+  depends_on = [time_sleep.wait_3_minutes_2]
+  provisioner "local-exec" {
+    command = <<EOT
+      scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/install_ahc.sh ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/install_ahc.sh
+      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "chmod +x /home/${var.superuser_username}/install_ahc.sh && /home/${var.superuser_username}/install_ahc.sh"
+    EOT
+  }
+}
+*/
+
+
+/*
+## Example of running an Ansible playbook against the created VM.
+## Assumes Ansible is installed on the local machine running Terraform.
+## Also assumes the Ansible playbook is located in ../scripts/ansible_main.yml
+##
+resource "null_resource" "run_ansible_playbook" {
+  depends_on = [time_sleep.wait_3_minutes_2]
+  provisioner "local-exec" {
+    #interpreter = ["/bin/bash"]
+    working_dir = "../scripts"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml"
+  }
+}
+*/
 
 output "ip" {
   value = local.host_ip

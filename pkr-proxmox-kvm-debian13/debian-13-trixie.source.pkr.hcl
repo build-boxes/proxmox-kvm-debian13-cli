@@ -41,6 +41,7 @@ source "proxmox-iso" "debian-13" {
     disk_size         = var.disk_size
     format            = var.disk_format
     storage_pool      = var.storage_pool
+    ssd               = var.disk_ssd_enabled
     type              = "scsi"
   }
 

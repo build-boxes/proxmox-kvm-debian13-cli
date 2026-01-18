@@ -1,21 +1,26 @@
 # Docker Compose file for Dockhand with PostgreSQL
-version: '3.8'
 services:
   postgres:
     image: postgres:16-alpine
+    name: postgres
+    restart: always
+    ports:
+      - 5432:5432
     environment:
       POSTGRES_USER: dockhand
-      POSTGRES_PASSWORD: changeme
+      POSTGRES_PASSWORD: ChangeMe
       POSTGRES_DB: dockhand
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   dockhand:
     image: fnsys/dockhand:latest
+    name: dockhand
+    restart: always
     ports:
       - 3000:3000
     environment:
-      DATABASE_URL: postgres://dockhand:changeme@postgres:5432/dockhand
+      DATABASE_URL: postgres://dockhand:ChangeMe@postgres:5432/dockhand
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - dockhand_data:/app/data
