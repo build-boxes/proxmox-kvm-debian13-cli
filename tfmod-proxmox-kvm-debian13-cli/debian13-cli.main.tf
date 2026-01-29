@@ -258,7 +258,7 @@ resource "null_resource" "run_ansible_playbook" {
   depends_on = [null_resource.wait_4_apt]
   provisioner "local-exec" {
     #interpreter = ["/bin/bash"]
-    working_dir = "ansible-playbooks"
+    working_dir = "./ansible-playbooks"
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml -e 'install_docker=${var.docker_intalled}'"
   }
 }

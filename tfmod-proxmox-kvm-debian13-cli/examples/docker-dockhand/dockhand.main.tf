@@ -22,8 +22,8 @@ provider "proxmox" {
 } 
 
 module "debian13-cli" {
-    #source = "git::https://github.com/build-boxes/proxmox-kvm-debian13-cli.git//tfmod-proxmox-kvm-debian13-cli"
-    source = "../.."
+    source = "git::https://github.com/build-boxes/proxmox-kvm-debian13-cli.git//tfmod-proxmox-kvm-debian13-cli"
+    #source = "../.."
 
     pub_key_file=var.pub_key_file
     pvt_key_file=var.pvt_key_file
