@@ -67,4 +67,5 @@ scripts/**/*.cmd
 scripts/**/*.yml
 scripts/**/*.yaml
 scripts/**/*.py
-
+!scripts/ansible_tasks/docker.yml
+!scripts/ansible_main.yml

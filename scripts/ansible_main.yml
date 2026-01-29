@@ -1,0 +1,12 @@
+---
+- name: Ansible Main
+  hosts: all
+  gather_facts: true
+  become: true
+
+  tasks:
+    - name: Include Docker Installation and Configuration Tasks
+      ansible.builtin.include_tasks: ansible_tasks/docker.yml
+      when: install_docker | bool
+      vars:
+        install_docker: "{{ install_docker }}"

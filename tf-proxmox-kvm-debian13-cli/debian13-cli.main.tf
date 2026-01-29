@@ -1,207 +1,6 @@
-# Adapted from: https://github.com/build-boxes/terraform-proxmox-windows-example/blob/main/main.tf
-#
-#
-# see https://github.com/hashicorp/terraform
-terraform {
-  required_providers {
-    # see https://registry.terraform.io/providers/hashicorp/random
-    random = {
-      source  = "hashicorp/random"
-      version = "3.7.1"
-    }
-    # see https://registry.terraform.io/providers/hashicorp/cloudinit
-    cloudinit = {
-      source  = "hashicorp/cloudinit"
-      version = "2.3.6"
-    }
-    # see https://registry.terraform.io/providers/bpg/proxmox
-    # see https://github.com/bpg/terraform-provider-proxmox
-    proxmox = {
-      source  = "bpg/proxmox"
-      version = "0.93.0"
-    }
-    time = {
-          source = "hashicorp/time"
-          version = "0.13.1"
-    }
-  }
-}
-
-provider "proxmox" {
-    endpoint = var.PROXMOX_VE_ENDPOINT
-    username = var.PROXMOX_VE_USERNAME
-    password = var.PROXMOX_VE_PASSWORD
-    insecure = var.PROXMOX_VE_INSECURE
-  ssh {
-    agent = true
-    node {  
-      name    = var.proxmox_node_name
-      address = var.proxmox_node_address
-    }
-  }
-}
-
-variable "proxmox_node_name" {
-  type    = string
-  default = "pve"
-}
-
-variable "proxmox_node_address" {
-  type = string
-}
-
-variable "PROXMOX_VE_ENDPOINT" {
-    type = string
-    default = "https://192.168.4.20:8006/api2/json"
-}
-
-variable "PROXMOX_VE_USERNAME" {
-    type = string
-    sensitive = true
-    default = "admin@pve"
-}
-
-variable "PROXMOX_VE_PASSWORD" {
-    type = string
-    sensitive = true
-    default = "PassW0rd123!!"
-}
-
-variable "PROXMOX_VE_INSECURE" {
-    type = bool
-    default = false
-}
-
-
-variable "prefix" {
-  # This is used to rename the host to this name.description
-  # also used as a prefix for text and log files names.
-  type    = string
-  default = "Hawk01"
-}
-
-variable "pub_key_file" {
-  type = string
-  #default = "~/.ssh/id_rsa.pub"
-}
-
-variable "pvt_key_file" {
-  type = string
-  #default = "~/.ssh/id_rsa"
-  sensitive = true
-}
-
-variable "superuser_username" {
-  type    = string
-  default = "terraform"
-}
-
-variable "superuser_old_password" {
-  type      = string
-  sensitive = true
-  # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
-  # NB this value must meet the Windows password policy requirements.
-  #    see https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
-  # Password with @ symbol has issues in cloudbase-init scripts escape-sequencing in terraform ".tf" files
-  default = "HeyH0Password"
-}
-
-
-variable "superuser_new_password" {
-  type      = string
-  sensitive = true
-  # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
-  # NB this value must meet the Windows password policy requirements.
-  #    see https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
-  # Password with @ symbol has issues in cloudbase-init scripts escape-sequencing in terraform ".tf" files
-  default = "HeyH0Password"
-}
-
-variable "root_new_password" {
-  type      = string
-  sensitive = true
-  default = "HeyH0Password"
-}
-
-variable "proxmox_vm_template_tags" {
-  type        = list(string)
-  description = "Tags to filter Proxmox VM templates"
-  default     = ["debian", "debian13", "desktop", "docker", "gnome", "template", "trixie"]
-}
-
-variable "proxmox_vm_tags" {
-  type        = list(string)
-  description = "Tags to assign to created Proxmox VMs"
-  default     = ["debian13", "desktop", "example", "terraform"]
-}
-
-variable "proxmox_datastore_id" {
-  type        = string
-  description = "Proxmox Datastore ID where VM disks are stored"
-  default     = "local-lvm"
-}
-
-variable "vm_fixed_ip" {
-  type        = string
-  description = "Fixed IP address with CIDR notation for the created VM"
-  default     = "192.168.0.3/24"
-}
-
-variable "vm_fixed_gateway" {
-  type        = string
-  description = "Fixed Gateway IP address for the created VM"
-  default     = "192.168.0.1"
-}
-
-variable "vm_fixed_dns" {
-  type        = list(string)
-  description = "Fixed DNS server IP addresses for the created VM"
-  default     = ["192.168.0.1"]
-}
-
-variable "cpu_core_count" {
-  type        = number
-  description = "Number of CPU cores for the created VM"
-  default     = 1
-  validation {
-    condition     = var.cpu_core_count >= 1 && var.cpu_core_count <= 8
-    error_message = "CPU core count must be at least 1, and at most 8."
-  }
-}
-
-variable "memory_size_gb" {
-  type        = number
-  description = "Memory size in GB for the created VM"
-  default     = 1
-  validation {
-    condition     = var.memory_size_gb >= 1 && var.memory_size_gb <= 15
-    error_message = "Memory size must be at least 1 GB, and at most 15 GB."
-  }
-}
-
-variable "disk_size_gb_boot" {
-  type        = string
-  description = "Boot disk size in GB for the created VM. Default is '16G'."
-  default     = "16G"
-  validation {
-    condition     = tonumber(replace(var.disk_size_gb_boot, "G", "")) >= 16 && tonumber(replace(var.disk_size_gb_boot, "G", "")) <= 200
-    error_message = "Boot disk size must be at least '16G', and at most '200G'. Also note that is a String value inside Double-Quotes with 'G' at its end."
-  }
-}
-
-variable "disk_boot_ssd_enabled" {
-  type        = bool
-  description = "Enable SSD flag for the boot disk of the created VM"
-  default     = true
-  validation {
-    condition     = var.disk_boot_ssd_enabled == true || var.disk_boot_ssd_enabled == false
-    error_message = "Disk_boot_ssd_enabled must be a boolean value (true or false)."
-  }
-}
-
 locals {
   # Store the computed host IP address for reuse throughout the configuration
-  host_ip = coalesce(try(split("/",proxmox_virtual_environment_vm.example.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.example.ipv4_addresses[1][0] )
+  host_ip = coalesce(try(split("/",proxmox_virtual_environment_vm.clone_edited_template.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.clone_edited_template.ipv4_addresses[1][0] )
 }
 
 
@@ -224,7 +23,7 @@ data "proxmox_virtual_environment_vm" "debian13_template" {
 # see https://cloudbase-init.readthedocs.io/en/1.1.6/userdata.html#userdata
 # see https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/config.html
 # see https://developer.hashicorp.com/terraform/language/expressions#string-literals
-data "cloudinit_config" "example" {
+data "cloudinit_config" "initialize_sudo_disks" {
   gzip          = false
   base64_encode = false
   part {
@@ -268,18 +67,18 @@ data "cloudinit_config" "example" {
 }
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/resources/virtual_environment_file
-resource "proxmox_virtual_environment_file" "example_ci_user_data" {
+resource "proxmox_virtual_environment_file" "initialize_ci_user_data" {
   content_type = "snippets"
   datastore_id = var.proxmox_datastore_id
   node_name    = var.proxmox_node_name
   source_raw {
     file_name = "${var.prefix}-ci-user-data.txt"
-    data      = data.cloudinit_config.example.rendered
+    data      = data.cloudinit_config.initialize_sudo_disks.rendered
   }
 }
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/resources/virtual_environment_vm
-resource "proxmox_virtual_environment_vm" "example" {
+resource "proxmox_virtual_environment_vm" "clone_edited_template" {
   name      = var.prefix
   node_name = var.proxmox_node_name
   tags      = var.proxmox_vm_tags
@@ -293,7 +92,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     cores = var.cpu_core_count
   }
   memory {
-    dedicated = 1024 * var.memory_size_gb
+    dedicated = endswith(var.memory_size, "G") ? 1024 * tonumber(replace(var.memory_size, "G", "")) : ( endswith(var.memory_size, "M") ? tonumber(replace(var.memory_size, "M", "")) : tonumber(var.memory_size) )
   }
   network_device {
     bridge = "vmbr0"
@@ -305,7 +104,7 @@ resource "proxmox_virtual_environment_vm" "example" {
     iothread    = true
     ssd         = var.disk_boot_ssd_enabled
     discard     = "on"
-    size        = tonumber(replace(var.disk_size_gb_boot, "G", ""))
+    size        = endswith(var.disk_size_boot, "G") ? tonumber(replace(var.disk_size_boot, "G", "")) : ( endswith(var.disk_size_boot, "M") ? tonumber(replace(var.disk_size_boot, "M", "")) / 1024 : tonumber(var.disk_size_boot) / 1024 )
   }
   ## Add additional Disks here, if required.
   ##
@@ -331,7 +130,7 @@ resource "proxmox_virtual_environment_vm" "example" {
   # see https://cloudbase-init.readthedocs.io/en/latest/services.html#openstack-configuration-drive
   # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/resources/virtual_environment_vm#initialization
   initialization {
-    user_data_file_id = proxmox_virtual_environment_file.example_ci_user_data.id
+    user_data_file_id = proxmox_virtual_environment_file.initialize_ci_user_data.id
     datastore_id = var.proxmox_datastore_id    
     # # >>> Fixed IP -- Start
     # # Use following if need fixed IP Address, otherwise comment out
@@ -348,8 +147,8 @@ resource "proxmox_virtual_environment_vm" "example" {
   }
 }
 
-resource "time_sleep" "wait_1_minutes" {
-  depends_on = [proxmox_virtual_environment_vm.example]
+resource "time_sleep" "wait_1_minutes_1" {
+  depends_on = [proxmox_virtual_environment_vm.clone_edited_template]
   # 12 minutes sleep. I have a slow Proxmox Host :(
   create_duration = "1m"
 }
@@ -357,7 +156,7 @@ resource "time_sleep" "wait_1_minutes" {
 # # NB this can only connect after about 3m15s (because the ssh service in the
 # #    windows base image is configured as "delayed start").
 resource "null_resource" "ssh_into_vm" {
-  depends_on = [time_sleep.wait_1_minutes]
+  depends_on = [time_sleep.wait_1_minutes_1]
   provisioner "remote-exec" {
     connection {
       target_platform = "unix"
@@ -423,25 +222,19 @@ resource "null_resource" "ssh_into_vm" {
       sudo resize2fs /dev/debian-vg/root
       echo "Extended root filesystem to fill boot disk."
       ## End Extend Root filesystem to fill boot disk
-      ## Enable Docker Service to start at boot
-      ##
-      echo "Enabling Docker service to start at boot..."
-      sudo systemctl enable docker
-      echo "Enabled Docker service to start at boot."
-      ## End Enable Docker Service to start at boot 
       EOF
     ]
   }
 }
 
-resource "time_sleep" "wait_3_minutes" {
+resource "time_sleep" "wait_3_minutes_2" {
   depends_on = [null_resource.ssh_into_vm]
   # 12 minutes sleep. I have a slow Proxmox Host :(
   create_duration = "3m"
 }
 
 resource "null_resource" "wait_4_apt" {
-  depends_on = [time_sleep.wait_3_minutes]
+  depends_on = [time_sleep.wait_3_minutes_2]
   provisioner "remote-exec" {
     connection {
       target_platform = "unix"
@@ -462,8 +255,22 @@ resource "null_resource" "wait_4_apt" {
   }
 }
 
-resource "null_resource" "restart_vm" {
+## Run Ansible Playbook to install and configure docker (if mandated by var.docker_installed).
+## Assumes Ansible is installed on the local machine running Terraform.
+## Also assumes the Ansible playbook is located in ../scripts/ansible_main.yml
+##
+resource "null_resource" "run_ansible_playbook" {
   depends_on = [null_resource.wait_4_apt]
+  provisioner "local-exec" {
+    #interpreter = ["/bin/bash"]
+    working_dir = "../scripts"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml -e 'install_docker=${var.docker_intalled}'"
+  }
+}
+
+
+resource "null_resource" "restart_vm" {
+  depends_on = [null_resource.run_ansible_playbook]
   provisioner "remote-exec" {
     connection {
       target_platform = "unix"
@@ -473,7 +280,7 @@ resource "null_resource" "restart_vm" {
       password        = var.superuser_new_password
       private_key = file("${var.pvt_key_file}")
       agent = false
-      timeout = "2m"
+      timeout = "4m"
     }
     # NB this is executed as a batch script by cmd.exe.
     inline = [
@@ -484,27 +291,26 @@ resource "null_resource" "restart_vm" {
   }
 }
 
-resource "time_sleep" "wait_3_minutes_2" {
+resource "time_sleep" "wait_3_minutes_3" {
   depends_on = [null_resource.restart_vm]
   create_duration = "3m"
 }
 
-resource "null_resource" "copy_compose_file" {
-  depends_on = [time_sleep.wait_3_minutes_2]
-  provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/docker-compose.yml ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/"
-  }
-}
+# resource "null_resource" "copy_compose_file" {
+#   depends_on = [time_sleep.wait_3_minutes_2]
+#   provisioner "local-exec" {
+#     command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/docker-compose.yml ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/"
+#   }
+# }
 
-resource "null_resource" "run_docker_compose" {
-  depends_on = [null_resource.copy_compose_file]
-  provisioner "local-exec" {
-    command = <<EOT
-      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
-    EOT
-  }
-}
-
+# resource "null_resource" "run_docker_compose" {
+#   depends_on = [null_resource.copy_compose_file]
+#   provisioner "local-exec" {
+#     command = <<EOT
+#       ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
+#     EOT
+#   }
+# }
 
 /*
 ## Example of copying and running a custom script on the created VM.
@@ -536,8 +342,3 @@ resource "null_resource" "run_ansible_playbook" {
   }
 }
 */
-
-output "ip" {
-  value = local.host_ip
-  #proxmox_virtual_environment_vm.example.ipv4_addresses[index(proxmox_virtual_environment_vm.example.network_interface_names, "Ethernet")][0]
-}

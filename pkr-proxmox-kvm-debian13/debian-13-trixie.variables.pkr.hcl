@@ -36,7 +36,7 @@ variable "cpu_type" {
 
 variable "cores" {
   type    = string
-  default = "2"
+  default = "1"
 }
 
 variable "disk_format" {
@@ -46,7 +46,7 @@ variable "disk_format" {
 
 variable "disk_size" {
   type    = string
-  default = "16G"
+  default = "4G"
 }
 
 variable "disk_ssd_enabled" {
@@ -66,7 +66,7 @@ variable "storage_pool" {
 
 variable "memory" {
   type    = string
-  default = "2048"
+  default = "2048M"
 }
 
 variable "network_vlan" {
@@ -110,7 +110,7 @@ variable "preseed_url" {
 variable "vm_image_tags" {
   type        = list(string)
   description = "Tags for the Packer template"
-  default     = ["template", "debian", "debian13", "trixie", "cli", "docker"]
+  default     = ["template", "debian", "debian13", "trixie", "cli"]
 }
 
 variable "superuser_name" {

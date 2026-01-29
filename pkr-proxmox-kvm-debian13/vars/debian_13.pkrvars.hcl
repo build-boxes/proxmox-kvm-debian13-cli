@@ -1,15 +1,15 @@
 proxmox_host      = "10.0.0.10:8006"
 proxmox_node      = "shackvm01"
-vm_name           = "template-debian-13-docker"
-vmid              = "9100"
+vm_name           = "template-debian-13-cli"
+vmid              = "9101"
 cpu_type          = "host"
-cores             = "2"
-memory            = "2048"
+cores             = "1"
+memory            = "512M"
 storage_pool      = "local-lvm"
-disk_size         = "16G"
+disk_size         = "4096M"
 disk_format       = "raw"
 disk_ssd_enabled  = false
-vm_image_tags     = ["template", "debian13", "cli", "docker"]
+vm_image_tags     = ["template", "debian13", "cli", "minimal"]
 
 iso_file         = "vmdata:iso/debian-13.3.0-amd64-netinst.iso"
 iso_checksum     = "sha512:1ada40e4c938528dd8e6b9c88c19b978a0f8e2a6757b9cf634987012d37ec98503ebf3e05acbae9be4c0ec00b52e8852106de1bda93a2399d125facea45400f8"

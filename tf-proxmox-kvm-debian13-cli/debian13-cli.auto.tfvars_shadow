@@ -8,7 +8,7 @@ superuser_old_password="XXXXXXXX"
 superuser_new_password="XXXXXXXX"
 root_new_password="XXXXXXXX"
 # prefix is actually Proxmox KVM Name, and hostname.
-prefix="myvm"
+prefix="appname"
 # Proxmox vars
 proxmox_node_address="192.168.4.20"
 proxmox_node_name="pve"
@@ -19,12 +19,13 @@ PROXMOX_VE_INSECURE=true
 # Following specifies which datastore this VM and its artifacts will be on.
 proxmox_datastore_id="local"
 # Tags to identify Proxmox VM Template
-proxmox_vm_template_tags=["template", "debian13", "cli", "docker"]
+proxmox_vm_template_tags=["template", "debian13", "cli", "minimal"]
 # Tags to give to created VM
-proxmox_vm_tags=["debian13", "cli", "example", "terraform"]
+proxmox_vm_tags=["debian13", "cli", "appname", "minimal"]
 vm_fixed_ip="192.168.0.3/24"
 vm_fixed_gateway="192.168.0.1"
 vm_fixed_dns=["192.168.0.1"]
 cpu_core_count=1
-memory_size_gb=1
-disk_size_gb_boot="16G"
+memory_size="512M"
+disk_size_boot="4G"
+docker_installed=true

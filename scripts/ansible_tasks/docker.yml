@@ -59,3 +59,11 @@
               "metrics-addr": "127.0.0.1:9323",
               "experimental": true
       }
+    
+- name: Enable Docker service to start at boot
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+    daemon_reload: yes
+  become: true

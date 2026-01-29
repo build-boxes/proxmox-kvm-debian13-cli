@@ -9,14 +9,14 @@ source "proxmox-iso" "debian-13" {
   node                     = var.proxmox_node
 
   vm_name                 = var.vm_name
-  template_description    = "Debian 13 Trixie Packer Template, with Docker installed  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
+  template_description    = "Debian 13 Trixie Packer Template, minimal  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
   tags                    = join(";", var.vm_image_tags)
   vm_id                   = var.vmid
   os                      = "l26"
   cpu_type                = var.cpu_type
   sockets                 = "1"
   cores                   = var.cores
-  memory                  = var.memory
+  memory                  = endswith(var.memory, "G") ? convert(1024*parseint(replace(var.memory, "G", ""),10),string) : ( endswith(var.memory, "M") ? replace(var.memory, "M", "") : var.memory )
   machine                 = "q35"
   bios                    = "ovmf"
   efi_config {
@@ -59,7 +59,10 @@ source "proxmox-iso" "debian-13" {
   boot_wait      = "13s"
   #boot_command   = ["<esc><wait>auto url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"]
   #boot_command   = ["<esc><wait>auto url=${var.preseed_url}<enter>"]
-  boot_command   = ["<esc><wait><down><down><wait2s><enter><wait4s><down><down><down><down><down><wait2s><enter><wait90s>${var.preseed_url}<wait2s><enter>"]
+  # Following is for debian13-normal-memory (1G RAM)
+  # boot_command   = ["<esc><wait><down><down><wait2s><enter><wait4s><down><down><down><down><down><wait2s><enter><wait90s>${var.preseed_url}<wait2s><enter>"]
+  # following is for debian13-minimal-memory (512M RAM)
+  boot_command   = ["<esc><wait><down><down><wait2s><enter><wait4s><down><down><down><down><down><wait2s><enter><wait5s><enter><wait90s>${var.preseed_url}<wait2s><enter>"]
   #boot_command   = ["<esc><wait>", "install <wait>", " preseed/url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg <wait>", "debian-installer=en_US.UTF-8 <wait>", "auto <wait>", "locale=en_US.UTF-8 <wait>", "kbd-chooser/method=us <wait>", "keyboard-configuration/xkb-keymap=us <wait>", "netcfg/get_hostname={{ .Name }} <wait>", "netcfg/get_domain=vagrantup.com <wait>", "fb=false <wait>", "debconf/frontend=noninteractive <wait>", "console-setup/ask_detect=false <wait>", "console-keymaps-at/keymap=us <wait>", "grub-installer/bootdev=/dev/sda <wait>", "<enter><wait>"]
 
   ssh_username = "root"
