@@ -57,15 +57,15 @@
 # For built boxes
 **/*.box
 
+#################################
 # Hammad custom
-**/debian*-hammad.pkrvars.*
-scripts/**/*.sh
-scripts/**/*.ps1
-scripts/**/*.psm1
-scripts/**/*.bat
-scripts/**/*.cmd
-scripts/**/*.yml
-scripts/**/*.yaml
-scripts/**/*.py
-!scripts/ansible_tasks/docker.yml
-!scripts/ansible_main.yml
+#################################
+**/*hammad.pkrvars.hcl
+**/*.pkrvars.hcl
+!**/*sample.pkrvars.hcl
+
+**/*auto.tfvars
+**/*.tfvars
+!**/*sample.tfvars
+
+################################

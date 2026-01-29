@@ -1,19 +1,14 @@
-locals {
-  # Store the computed host IP address for reuse throughout the configuration
-  host_ip = coalesce(try(split("/",proxmox_virtual_environment_vm.clone_edited_template.initialization[0].ip_config[0].ipv4[0].address)[0], null),proxmox_virtual_environment_vm.clone_edited_template.ipv4_addresses[1][0] )
-}
-
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vms
 data "proxmox_virtual_environment_vms" "debian13_templates" {
   tags = var.proxmox_vm_template_tags
-  node_name="jupyter"
+  node_name = var.proxmox_node_name
 }
 
 # see https://registry.terraform.io/providers/bpg/proxmox/0.75.0/docs/data-sources/virtual_environment_vm
 data "proxmox_virtual_environment_vm" "debian13_template" {
-  node_name = data.proxmox_virtual_environment_vms.debian13_templates.vms[0].node_name
-  vm_id     = data.proxmox_virtual_environment_vms.debian13_templates.vms[0].vm_id
+  node_name = local.template_vm.node_name
+  vm_id     = local.template_vm.vm_id
 }
 
 # the virtual machine cloudbase-init cloud-config.
@@ -257,13 +252,13 @@ resource "null_resource" "wait_4_apt" {
 
 ## Run Ansible Playbook to install and configure docker (if mandated by var.docker_installed).
 ## Assumes Ansible is installed on the local machine running Terraform.
-## Also assumes the Ansible playbook is located in ../scripts/ansible_main.yml
+## Also assumes the Ansible playbook is located in ./ansible-playbooks/ansible_main.yml
 ##
 resource "null_resource" "run_ansible_playbook" {
   depends_on = [null_resource.wait_4_apt]
   provisioner "local-exec" {
     #interpreter = ["/bin/bash"]
-    working_dir = "../scripts"
+    working_dir = "ansible-playbooks"
     command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml -e 'install_docker=${var.docker_intalled}'"
   }
 }
@@ -295,50 +290,3 @@ resource "time_sleep" "wait_3_minutes_3" {
   depends_on = [null_resource.restart_vm]
   create_duration = "3m"
 }
-
-# resource "null_resource" "copy_compose_file" {
-#   depends_on = [time_sleep.wait_3_minutes_2]
-#   provisioner "local-exec" {
-#     command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/docker-compose.yml ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/"
-#   }
-# }
-
-# resource "null_resource" "run_docker_compose" {
-#   depends_on = [null_resource.copy_compose_file]
-#   provisioner "local-exec" {
-#     command = <<EOT
-#       ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
-#     EOT
-#   }
-# }
-
-/*
-## Example of copying and running a custom script on the created VM.
-## Assumes the custom script is located in ../scripts/install_ahc.sh
-##
-resource "null_resource" "call_custom_script" {
-  depends_on = [time_sleep.wait_3_minutes_2]
-  provisioner "local-exec" {
-    command = <<EOT
-      scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ../scripts/install_ahc.sh ${var.superuser_username}@${local.host_ip}:/home/${var.superuser_username}/install_ahc.sh
-      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${local.host_ip} "chmod +x /home/${var.superuser_username}/install_ahc.sh && /home/${var.superuser_username}/install_ahc.sh"
-    EOT
-  }
-}
-*/
-
-
-/*
-## Example of running an Ansible playbook against the created VM.
-## Assumes Ansible is installed on the local machine running Terraform.
-## Also assumes the Ansible playbook is located in ../scripts/ansible_main.yml
-##
-resource "null_resource" "run_ansible_playbook" {
-  depends_on = [time_sleep.wait_3_minutes_2]
-  provisioner "local-exec" {
-    #interpreter = ["/bin/bash"]
-    working_dir = "../scripts"
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml"
-  }
-}
-*/

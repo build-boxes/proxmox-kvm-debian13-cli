@@ -3,6 +3,10 @@
 #
 # see https://github.com/hashicorp/terraform
 terraform {
+  
+  #required_version = ">= 1.12.1, <= 1.14.4"
+  required_version = ">= 1.12.1"
+
   required_providers {
     # see https://registry.terraform.io/providers/hashicorp/random
     random = {
@@ -27,16 +31,3 @@ terraform {
   }
 }
 
-provider "proxmox" {
-    endpoint = var.PROXMOX_VE_ENDPOINT
-    username = var.PROXMOX_VE_USERNAME
-    password = var.PROXMOX_VE_PASSWORD
-    insecure = var.PROXMOX_VE_INSECURE
-  ssh {
-    agent = true
-    node {  
-      name    = var.proxmox_node_name
-      address = var.proxmox_node_address
-    }
-  }
-}
