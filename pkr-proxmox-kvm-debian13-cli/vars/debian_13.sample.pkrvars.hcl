@@ -1,3 +1,7 @@
+## INSTRUCTIONS: Make a copy of this file named "debian_13.actual.pkvars.hcl" and fill in the Actual values.
+##
+# This is a Shadow file, illustrating what the actual file should contain.
+#
 proxmox_host      = "10.0.0.10:8006"
 proxmox_node      = "shackvm01"
 vm_name           = "template-debian-13-cli"

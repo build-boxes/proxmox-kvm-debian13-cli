@@ -1,4 +1,4 @@
-## INSTRUCTIONS: Make a copy of this file named "dockhand.auto.tfvars" and fill in the Actual values.
+## INSTRUCTIONS: Make a copy of this file named "webnode.auto.tfvars" and fill in the Actual values.
 ##
 # This is a Shadow file, illustrating what the actual file should contain.
 # 
@@ -10,7 +10,7 @@ superuser_old_password="XXXXXXXX"
 superuser_new_password="XXXXXXXX"
 root_new_password="XXXXXXXX"
 # prefix is actually Proxmox KVM Name, and hostname.
-prefix="dockhand"
+prefix="webnode"
 # Proxmox vars
 proxmox_node_address="192.168.4.20"
 proxmox_node_name="pve"
@@ -23,12 +23,12 @@ proxmox_datastore_id="local"
 # Tags to identify Proxmox VM Template
 proxmox_vm_template_tags=["template", "debian13", "cli", "minimal"]
 # Tags to give to created VM
-proxmox_vm_tags=["debian13", "cli", "dockhand", "minimal"]
-vm_fixed_ip="192.168.0.25/24"
+proxmox_vm_tags=["debian13", "cli", "webnode", "minimal"]
+vm_fixed_ip="192.168.0.24/24"
 vm_fixed_gateway="192.168.0.1"
 vm_fixed_dns=["192.168.0.1"]
-cpu_core_count=3
-memory_size="1G"
-disk_size_boot="80G"
+cpu_core_count=1
+memory_size="800M"
+disk_size_boot="8G"
 disk_boot_ssd_enabled=false
-docker_installed=true
+docker_installed=false

@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+## INSTRUCTIONS: Make a copy of this file named "install_ahc.actual.sh" and fill in the Actual values.
+##
+# This is a Shadow file, illustrating what the actual file should contain.
+# 
+
 set -euo pipefail
 
 # Example sustome_script.sh
@@ -39,7 +45,7 @@ fi
 echo -e "${YELLOW}Cloning AHC repository...${RESET}"
 
 if [ ! -d "ahc" ]; then
-    git clone https://github.com/accuhijri/ahc.git
+    git clone https://github.com/hammadrauf/ahc.git
 else
     echo -e "${YELLOW}Directory 'ahc' already exists. Updating...${RESET}"
     cd ahc
@@ -75,12 +81,8 @@ pip install .
 # ------------------------------------------------------------
 # 6. Optional: Install geopandas (needed for visibility maps)
 # ------------------------------------------------------------
-read -p "Install geopandas for crescent visibility maps? (y/n): " INSTALL_GPD
-
-if [[ "$INSTALL_GPD" =~ ^[Yy]$ ]]; then
-    echo -e "${YELLOW}Installing geopandas...${RESET}"
-    pip install geopandas
-fi
+echo -e "${YELLOW}Installing, optional package,  geopandas (needed for visibility maps)...${RESET}"
+pip install geopandas
 
 # ------------------------------------------------------------
 # 7. Done

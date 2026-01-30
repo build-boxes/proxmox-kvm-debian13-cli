@@ -53,7 +53,7 @@ module "debian13-cli" {
 resource "null_resource" "copy_compose_file" {
   depends_on = [module.debian13-cli]
   provisioner "local-exec" {
-    command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} scripts/docker-compose.yml ${var.superuser_username}@${module.debian13-cli.ip}:/home/${var.superuser_username}/"
+    command = "scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} scripts/docker-compose.actual.yml ${var.superuser_username}@${module.debian13-cli.ip}:/home/${var.superuser_username}/docker-compose.yml"
   }
 }
 

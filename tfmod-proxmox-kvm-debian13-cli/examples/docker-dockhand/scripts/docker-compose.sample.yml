@@ -1,3 +1,7 @@
+## INSTRUCTIONS: Make a copy of this file named "docker-compose.actual.yml" and fill in the Actual values.
+##
+# This is a Shadow file, illustrating what the actual file should contain.
+# 
 # Docker Compose file for Dockhand with PostgreSQL
 services:
   postgres:

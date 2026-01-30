@@ -1,11 +1,19 @@
 # proxmox-kvm-debian13-cli
 
-Debian13 CLI VM Packer Builder and Terraform Instance Manager scripts. Previously these scripts were located in 2 different projects.
+Debian13 CLI VM Packer Builder and Terraform Instance Manager (Module and Module Usage Examples) scripts. Previously these scripts were located in 2 different projects.
 There are two parts to it.
-1. Using Packer, Ansible, Proxmox etc. create a local KVM Template for Debian12.
+1. Using Packer, Ansible, Proxmox VE etc. create a local KVM Template for Debian12.
     - It is in the subfolder begining with pkr-*
-1. Using Terraform, and possibly Ansible, create an Instance of that Image for actual usage.
-    - It is in subfolder begining with tf-*
+1. Using Proxmox VE, Terraform, and Ansible, create an Instance of that Image for actual usage.
+    - It is in subfolder begining with tfmod-*/examples/<<choose-any>>
+    - [Module README Page Link](./tfmod-proxmox-kvm-debian13-cli/README.md)
+
+## Pre-requisites
+1. You need a Linux computer, Debian, Ubuntu, RHEL,  Fedora, WSL2 on Windows.
+2. You need to install Terraform (client)
+3. You will need to install Ansible client.
+4. You will need to install Git client.
+5. Other then the above computer, you will need a Proxmox VE 8 or 9 Server to host the Virtual Machine.
 
 ## Usage 
 1. Preparing for Image Build
@@ -15,10 +23,10 @@ There are two parts to it.
         - SHA512 Sum Link - [https://get.debian.org/images/release/13.0.0/amd64/iso-cd/SHA512SUMS](https://get.debian.org/images/release/13.0.0/amd64/iso-cd/SHA512SUMS)
     1. An actual WebServer was available and used in Packer Preseeding, rather then using the default Packer mechanism of inbuilt temporary webserver.
         - To do the same for yourself, just copy all files in the subfolder ./pkr-proxmox-kvm-debian13/http to the actual webserver. Then change the ./pkr-proxmox-kvm-debian13/vars/debian_13.pkrvars.hcl file accordingly.
-1. Image (KVM Template)  Build 
-    1. Change Directory into ./pkr-proxmox-kvm-debian13
+1. Image (KVM Template)  Build - Using Packer
+    1. Change Directory into ./pkr-proxmox-kvm-debian13-cli
         ```
-        cd ./pkr-proxmox-kvm-debian13
+        cd ./pkr-proxmox-kvm-debian13-cli
         ```
     1. Initialize Packer.
         ```
@@ -26,37 +34,40 @@ There are two parts to it.
         ```
     1. Launch Packer Build of Image (KVM Template) with your custom parameters or the Default sample.
         ```
-        packer build -var-file vars/debian13-hammad.pkrvars.hcl -var "proxmox_api_password=Password#01" .
-        --- OR ---
-        packer build -var-file vars/debian13.pkrvars.hcl -var "proxmox_api_password=Password#01" .
+        packer build -var-file vars/debian_13.actual.pkrvars.hcl -var "proxmox_api_password=Password#01" .
         ```
     1. The Image (KVM Template) should now be ready on the Proxmox server.
-1. VM Instance Creation
-    1. Change Directory into ../tf-proxmox-kvm-debian13
+1. VM Instance Creation - Using Terraform
+    1. Change Directory into ../tfmod-proxmox-kvm-debian13-cli/examples/<<any-one>>
         ```
-        cd ../tf-proxmox-kvm-debian13
+        cd ../tf-proxmox-kvm-debian13-cli/examples/bash-ahc
         ```
+        OR
+
+        Copy the contents of the Directory /tfmod-proxmox-kvm-debian13-cli/examples/<<any-one>> into a new sub-folder anywhere (let us assume it is /home/${USER}/tf-example ) on your host computer. Change into your sub-folder.
+        ```
+        cd /home/${USER}/tf-example
+        ```
+        You do not need other files in the Module on your computer, by default the module will be downloaded from its Github repository.
+
     1. Note that the Terraform script (coming up next) uses the Tags to identify the Image (KVM Template). So if you have changed the tags in the Packer configuration, you should also change them in the Terraform configuration.
     1. Launch Terraform to create an Instance of this Image, that you will actually use.
         ```
-        terraform init
+        terraform init -upgrade
         terraform plan
         terraform apply -auto-approve
         ```
     1. Your instance VM should now be ready.
-    1. You will need to log-in using SSH atleast once to change the template-assigned random password for the Super-User.
+        a. You can SSH login to the server.
         ```
         ssh terraform@<<IP_Address_of_instance>>
         ```
-        - Once logged in Change the Super-user password by using the following command interactivley:
-            ```
-            sudo passwd terraform
-            ```
-    1. To Destroy the Instance use the following command, in the ./tf-proxmox-kvm-debian13 folder:
+        a. End your SSH session on the VM.
+        ```
+        exit
+        ```
+    1. To Destroy the Instance use the following command, in the ./tf-proxmox-kvm-debian13-cli/examples/bash-ahc folder:
         ```
         terraform destroy -auto-approve
         ```
   
-
-
-

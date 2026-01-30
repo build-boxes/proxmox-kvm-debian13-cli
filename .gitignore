@@ -68,4 +68,14 @@
 **/*.tfvars
 !**/*sample.tfvars
 
+**/docker*.actual.yml
+!**/docker*.sample.yml
+
+**/install*.actual.sh
+!**/install*.sample.sh
+
+**/secrets.actual.yml
+**/.vault_pass.actual
+!**/secrets.sample.yml
+!**/.vault_pass.sample
 ################################
