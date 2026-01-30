@@ -15,7 +15,7 @@ This module provisions a Debian 13 CLI-only virtual machine on Proxmox VE using 
 ## Requirements
 1. Pre Built (by [Packer Automation](../pkr-proxmox-kvm-debian13-cli/README.md) ) VM Minimal Template stored on Proxmox VE Server.
 1. VM Hosting Server
-    - Proxmox VE 8.0+
+    - Proxmox VE 8.0+, [Proxmox VE](https://www.proxmox.com/en/proxmox-ve), [Enabling Proxmox No-Subscription Library](https://www.youtube.com/watch?v=5j0Zb6x_hOk&t=720s)
 1. A computer to execute Terraform and Ansible.
     - WSL2 on Windows, or Debian/Ubuntu or RHEL/Fedora.
     - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.12

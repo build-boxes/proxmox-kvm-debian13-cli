@@ -9,11 +9,11 @@ There are two parts to it.
     - [Module README Page Link](./tfmod-proxmox-kvm-debian13-cli/README.md)
 
 ## Pre-requisites
-1. You need a Linux computer, Debian, Ubuntu, RHEL,  Fedora, WSL2 on Windows.
-2. You need to install Terraform (client)
-3. You will need to install Ansible client.
-4. You will need to install Git client.
-5. Other then the above computer, you will need a Proxmox VE 8 or 9 Server to host the Virtual Machine.
+1. You need a Linux computer, Debian, Ubuntu, RHEL,  Fedora, WSL2 on Windows. [WSL2 on Windows](https://learn.microsoft.com/en-us/windows/wsl/install)
+2. You need to install Terraform (client) [Terraform](https://developer.hashicorp.com/terraform/install)
+3. You will need to install Ansible client. [Ansible control node](https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html)
+4. You will need to install Git client. [Git](https://git-scm.com/install/linux)
+5. Other then the above computer, you will need a Proxmox VE 8 or 9 Server to host the Virtual Machine. [Proxmox VE](https://www.proxmox.com/en/proxmox-ve), [Enabling Proxmox No-Subscription Library](https://www.youtube.com/watch?v=5j0Zb6x_hOk&t=720s)
 
 ## Usage 
 1. Preparing for Image Build

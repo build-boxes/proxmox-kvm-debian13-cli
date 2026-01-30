@@ -10,7 +10,7 @@ For Client, running the build tools...
 - [Packer](https://www.packer.io/downloads)
 - [Ansible control node](https://docs.ansible.com/projects/ansible/latest/installation_guide/intro_installation.html)
 For Server, Hosting the VMs....
-- [Proxmox VE](https://www.proxmox.com/en/proxmox-ve)
+- [Proxmox VE](https://www.proxmox.com/en/proxmox-ve), [Enabling Proxmox No-Subscription Library](https://www.youtube.com/watch?v=5j0Zb6x_hOk&t=720s)
 
 
 ## Why
