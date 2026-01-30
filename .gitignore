@@ -78,4 +78,6 @@
 **/.vault_pass.actual
 !**/secrets.sample.yml
 !**/.vault_pass.sample
+
+**/downloaded_iso_*
 ################################

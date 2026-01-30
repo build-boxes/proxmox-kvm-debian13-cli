@@ -36,6 +36,10 @@ There are two parts to it.
         ```
         packer build -var-file vars/debian_13.actual.pkrvars.hcl -var "proxmox_api_password=Password#01" .
         ```
+        OR, when using dynamic ISO download:
+        ```
+        packer build -var-file vars/debian_13.actual.pkrvars.hcl -var-file vars/generated-debian13-vars.pkrvars.hcl  -var "proxmox_api_password=Password#01" .
+        ```
     1. The Image (KVM Template) should now be ready on the Proxmox server.
 1. VM Instance Creation - Using Terraform
     1. Change Directory into ../tfmod-proxmox-kvm-debian13-cli/examples/<<any-one>>

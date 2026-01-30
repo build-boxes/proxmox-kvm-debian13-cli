@@ -1,9 +1,17 @@
+locals {
+  dynamic_vars_file = "${path.root}/vars/generated-debian13-vars.pkrvars.hcl"
+}
+
+
 build {
+
+  name = "debian13-trixie-kvm-template"
+
   sources = ["source.proxmox-iso.debian-13"]
 
   # Using ansible playbooks to configure debian
   provisioner "ansible" {
-    playbook_file    = "./ansible/debian_config.yml"
+    playbook_file    = "./scripts/debian_config.yml"
     use_proxy        = false
     user             = "root"
     ansible_env_vars = ["ANSIBLE_HOST_KEY_CHECKING=False"]

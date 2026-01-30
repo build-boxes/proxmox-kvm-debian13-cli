@@ -9,7 +9,7 @@ source "proxmox-iso" "debian-13" {
   node                     = var.proxmox_node
 
   vm_name                 = var.vm_name
-  template_description    = "Debian 13 Trixie Packer Template, minimal  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
+  template_description    = "Debian 13 Trixie Packer, minimal  -- Created: ${formatdate("YYYY-MM-DD hh:mm:ss ZZZ", timestamp())}"
   tags                    = join(";", var.vm_image_tags)
   vm_id                   = var.vmid
   os                      = "l26"
@@ -46,16 +46,18 @@ source "proxmox-iso" "debian-13" {
   }
 
   boot_iso {
-    iso_file          = var.iso_file
+    type              = "sata"
+    #iso_file          = var.iso_file
+    iso_url           = var.dynamic_iso_url
     iso_storage_pool  = var.iso_storage_pool
-    iso_checksum      = var.iso_checksum
+    #iso_checksum      = var.iso_checksum
+    iso_checksum      = var.dynamic_iso_checksum
     unmount           = true
   }
 
   http_directory = "http"
   http_port_min  = 8100
   http_port_max  = 8100
-  #boot_wait      = "10s"
   boot_wait      = "13s"
   #boot_command   = ["<esc><wait>auto url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed.cfg<enter>"]
   #boot_command   = ["<esc><wait>auto url=${var.preseed_url}<enter>"]
