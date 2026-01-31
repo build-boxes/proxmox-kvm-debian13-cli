@@ -1,0 +1,17 @@
+---
+roles:
+  - geerlingguy.repo-epel
+  - geerlingguy.repo-remi
+  - geerlingguy.docker
+  - hammadrauf.sudousers
+  - fauust.mariadb
+  - hammadrauf.apache2
+  - hammadrauf.apache_vhosts
+  - geerlingguy.php
+  - hammadrauf.ddclient
+  - hammadrauf.noipduc
+  - geerlingguy.certbot
+  - stackfocus.postfix-dovecot
+  - stefangweichinger.ansible_rclone
+collections:
+  - ansible.utils
