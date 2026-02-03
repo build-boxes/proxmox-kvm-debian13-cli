@@ -91,6 +91,7 @@ resource "proxmox_virtual_environment_vm" "clone_edited_template" {
   }
   network_device {
     bridge = "vmbr0"
+    mac_address = var.vm_mac_address
   }
   disk {      # Boot Disk, Size can be increased here. Then manually Increase Volume size inside Windows-2025.
     datastore_id = var.proxmox_datastore_id

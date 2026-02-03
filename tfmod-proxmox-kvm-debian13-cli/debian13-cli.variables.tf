@@ -97,16 +97,22 @@ variable "proxmox_datastore_id" {
   default     = "local-lvm"
 }
 
+variable "vm_mac_address" {
+  type        = string
+  description = "Optional custom MAC address for the created VM"
+  default     = null
+}
+
 variable "vm_fixed_ip" {
   type        = string
   description = "Fixed IP address with CIDR notation for the created VM"
-  default     = "192.168.0.3/24"
+  default     = null
 }
 
 variable "vm_fixed_gateway" {
   type        = string
   description = "Fixed Gateway IP address for the created VM"
-  default     = "192.168.0.1"
+  default     = null
 }
 
 variable "vm_fixed_dns" {
