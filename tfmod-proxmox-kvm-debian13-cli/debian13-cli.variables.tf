@@ -14,13 +14,13 @@ variable "PROXMOX_VE_ENDPOINT" {
 
 variable "PROXMOX_VE_USERNAME" {
     type = string
-    sensitive = true
+    #sensitive = true
     default = "admin@pve"
 }
 
 variable "PROXMOX_VE_PASSWORD" {
     type = string
-    sensitive = true
+    #sensitive = true
     default = "PassW0rd123!!"
 }
 
@@ -44,7 +44,7 @@ variable "pub_key_file" {
 variable "pvt_key_file" {
   type = string
   #default = "~/.ssh/id_rsa"
-  sensitive = true
+  #sensitive = true
 }
 
 variable "superuser_username" {
@@ -54,7 +54,7 @@ variable "superuser_username" {
 
 variable "superuser_old_password" {
   type      = string
-  sensitive = true
+  #sensitive = true
   # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
   # NB this value must meet the Windows password policy requirements.
   #    see https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
@@ -65,7 +65,7 @@ variable "superuser_old_password" {
 
 variable "superuser_new_password" {
   type      = string
-  sensitive = true
+  #sensitive = true
   # NB the password will be reset by the cloudbase-init SetUserPasswordPlugin plugin.
   # NB this value must meet the Windows password policy requirements.
   #    see https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/password-must-meet-complexity-requirements
@@ -75,7 +75,7 @@ variable "superuser_new_password" {
 
 variable "root_new_password" {
   type      = string
-  sensitive = true
+  #sensitive = true
   default = "HeyH0Password"
 }
 
@@ -161,12 +161,12 @@ variable "disk_boot_ssd_enabled" {
   }
 }
 
-variable "docker_intalled" {
+variable "docker_installed" {
   type        = bool
   description = "Install Docker on the created VM"
   default     = false
   validation {
-    condition     = var.docker_intalled == true || var.docker_intalled == false
+    condition     = var.docker_installed == true || var.docker_installed == false
     error_message = "docker_installed must be a boolean value (true or false)."
   }
 } 

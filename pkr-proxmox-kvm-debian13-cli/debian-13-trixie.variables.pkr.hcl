@@ -86,7 +86,7 @@ variable "network_vlan" {
 
 variable "proxmox_api_password" {
   type      = string
-  sensitive = true
+  #sensitive = true
   default   = ""
 }
 
@@ -108,7 +108,7 @@ variable "proxmox_node" {
 #No practical use of 'debian_root_password', since it is hard coded in pressed cfg.
 variable "debian_root_password" {
   type      = string
-  sensitive = true
+  #sensitive = true
   default   = "packer"
 }
 
@@ -138,7 +138,7 @@ variable "superuser_gecos" {
 variable "superuser_password" {
   type        = string
   description = "Superuser password hash for cloud-init configuration"
-  sensitive   = true
+  #sensitive   = true
   default     = ""
 }
 

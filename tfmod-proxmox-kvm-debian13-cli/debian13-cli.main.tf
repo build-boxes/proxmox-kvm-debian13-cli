@@ -261,7 +261,7 @@ resource "null_resource" "run_ansible_playbook" {
     #interpreter = ["/bin/bash"]
     # Use the module path so the playbooks are found whether the module is local or fetched into .terraform/modules
     working_dir = "${path.module}/ansible-playbooks"
-    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml -e 'install_docker=${var.docker_intalled}'"
+    command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -u '${var.superuser_username}' -i '${local.host_ip},' --private-key ${var.pvt_key_file} -e 'pub_key=${var.pub_key_file}' ansible_main.yml -e 'install_docker=${var.docker_installed}'"
   }
 }
 
