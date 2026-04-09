@@ -60,7 +60,8 @@ resource "null_resource" "copy_compose_file" {
 resource "null_resource" "run_docker_compose" {
   depends_on = [null_resource.copy_compose_file]
   provisioner "local-exec" {
-    command = <<EOT
+    command = <<EOTO
+      cat <<'OUTEROFF' > /var/tmp/setmeup.sh
       #!/usr/bin/env bash
       #ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
       set -euo pipefail
@@ -104,11 +105,14 @@ resource "null_resource" "run_docker_compose" {
       EOF
       
       # --- Reload + enable service ---
-      systemctl daemon-reload
-      systemctl enable docker-restart-cycle.service
+      sudo systemctl daemon-reload
+      sudo systemctl enable docker-restart-cycle.service
       
       echo "Provisioning complete: docker-restart-cycle.service installed and enabled."
-    EOT
+      OUTEROFF
+      scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} /var/tmp/setmeup.sh  ${var.superuser_username}@${module.debian13-cli.ip}://home/${var.superuser_username}/setmeup.sh
+      ssh  -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && chmod a+x setmeup.sh && ./setmeup.sh && sleep 10 && sudo systemctl start docker-restart-cycle.service"
+   EOTO
   }
 }
 
