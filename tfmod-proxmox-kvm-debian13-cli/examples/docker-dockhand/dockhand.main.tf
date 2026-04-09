@@ -110,7 +110,7 @@ resource "null_resource" "run_docker_compose" {
       
       echo "Provisioning complete: docker-restart-cycle.service installed and enabled."
       OUTEROFF
-      scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} /var/tmp/setmeup.sh  ${var.superuser_username}@${module.debian13-cli.ip}://home/${var.superuser_username}/setmeup.sh
+      scp -o StrictHostKeyChecking=no -i ${var.pvt_key_file} /var/tmp/setmeup.sh  ${var.superuser_username}@${module.debian13-cli.ip}:/home/${var.superuser_username}/setmeup.sh
       ssh  -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && chmod a+x setmeup.sh && ./setmeup.sh && sleep 10 && sudo systemctl start docker-restart-cycle.service"
    EOTO
   }
