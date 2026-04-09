@@ -61,7 +61,53 @@ resource "null_resource" "run_docker_compose" {
   depends_on = [null_resource.copy_compose_file]
   provisioner "local-exec" {
     command = <<EOT
-      ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
+      #!/usr/bin/env bash
+      #ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
+      set -euo pipefail
+      
+      SUPERUSER="${var.superuser_username}"
+      SCRIPT_PATH="/usr/local/bin/docker-restart-cycle.sh"
+      SERVICE_PATH="/etc/systemd/system/docker-restart-cycle.service"
+      
+      # --- Write script (idempotent) ---
+      install -m 0755 /dev/null "$SCRIPT_PATH"
+      cat <<'EOF' > "$SCRIPT_PATH"
+      #!/usr/bin/env bash
+      set -euo pipefail
+      
+      cd /home/${var.superuser_username}
+      
+      sudo docker compose up -d
+      sleep 10
+      sudo docker compose down
+      sleep 10
+      sudo docker compose up -d
+      EOF
+      
+      # --- Write systemd service (idempotent) ---
+      install -m 0644 /dev/null "$SERVICE_PATH"
+      cat <<EOF > "$SERVICE_PATH"
+      [Unit]
+      Description=Run Docker restart cycle on boot
+      After=network-online.target docker.service
+      Wants=network-online.target
+      
+      [Service]
+      Type=oneshot
+      User=${var.superuser_username}
+      Group=${var.superuser_username}
+      ExecStart=$SCRIPT_PATH
+      RemainAfterExit=no
+      
+      [Install]
+      WantedBy=multi-user.target
+      EOF
+      
+      # --- Reload + enable service ---
+      systemctl daemon-reload
+      systemctl enable docker-restart-cycle.service
+      
+      echo "Provisioning complete: docker-restart-cycle.service installed and enabled."
     EOT
   }
 }
