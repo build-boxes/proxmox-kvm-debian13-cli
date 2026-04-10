@@ -63,7 +63,6 @@ resource "null_resource" "run_docker_compose" {
     command = <<EOTO
       cat <<'OUTEROFF' > /var/tmp/setmeup.sh
       #!/usr/bin/env bash
-      #ssh -o StrictHostKeyChecking=no -i ${var.pvt_key_file} ${var.superuser_username}@${module.debian13-cli.ip} "cd /home/${var.superuser_username} && sudo docker compose up -d && sleep 10 && sudo docker compose down && sleep 10 && sudo docker compose up -d"
       set -euo pipefail
       
       SUPERUSER="${var.superuser_username}"
@@ -71,8 +70,8 @@ resource "null_resource" "run_docker_compose" {
       SERVICE_PATH="/etc/systemd/system/docker-restart-cycle.service"
       
       # --- Write script (idempotent) ---
-      install -m 0755 /dev/null "$SCRIPT_PATH"
-      cat <<'EOF' > "$SCRIPT_PATH"
+      sudo install -m 0755 /dev/null "$SCRIPT_PATH"
+      sudo tee "$SCRIPT_PATH" >/dev/null <<'EOF'
       #!/usr/bin/env bash
       set -euo pipefail
       
@@ -86,8 +85,8 @@ resource "null_resource" "run_docker_compose" {
       EOF
       
       # --- Write systemd service (idempotent) ---
-      install -m 0644 /dev/null "$SERVICE_PATH"
-      cat <<EOF > "$SERVICE_PATH"
+      sudo install -m 0644 /dev/null "$SERVICE_PATH"
+      sudo tee "$SERVICE_PATH" >/dev/null <<EOF
       [Unit]
       Description=Run Docker restart cycle on boot
       After=network-online.target docker.service
